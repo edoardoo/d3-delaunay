@@ -21,7 +21,7 @@ export default class Delaunay {
   constructor(points) {
     let d = new Delaunator(points);
     if (d.triangles.length === 0 && d.hull.length > 2) {
-      this.originalHull = d.hull; // for exact neighbors
+      this.collinear = d.hull; // for exact neighbors
       for (let i = 0, n = points.length / 2; i < n; ++i) {
         const p = jitter(points[2 * i], points[2 * i + 1]);
         points[2 * i] = p[0];
@@ -66,10 +66,10 @@ export default class Delaunay {
     const {inedges, hull, _hullIndex, halfedges, triangles} = this;
     
     // degenerate case with several collinear points
-    if (this.originalHull) {
-      const l = this.originalHull.indexOf(i);
-      if (l > 0) yield this.originalHull[l - 1];
-      if (l < this.originalHull.length - 1) yield this.originalHull[l + 1];
+    if (this.collinear) {
+      const l = this.collinear.indexOf(i);
+      if (l > 0) yield this.collinear[l - 1];
+      if (l < this.collinear.length - 1) yield this.collinear[l + 1];
       return;
     }
     
