@@ -3,7 +3,7 @@ import Path from "./path.js";
 import Polygon from "./polygon.js";
 import Voronoi from "./voronoi.js";
 
-const tau = 2 * Math.PI, epsilon = 1e-6;
+const tau = 2 * Math.PI;
 
 function pointX(p) {
   return p[0];
@@ -13,17 +13,38 @@ function pointY(p) {
   return p[1];
 }
 
-function jitter(x, y) {
-  return [x + epsilon * Math.sin(x + y), y + epsilon * Math.cos(x - y)];
+function area(hull, points) {
+  let n = hull.length, x0, y0,
+      x1 = points[2 * hull[n - 1]],
+      y1 = points[2 * hull[n - 1] + 1],
+      area = 0;
+
+  for (let i = 0; i < n; i ++) {
+    x0 = x1, y0 = y1;
+    x1 = points[2 * hull[i]];
+    y1 = points[2 * hull[i] + 1];
+    area += y0 * x1 - x0 * y1;
+  }
+
+  return area / 2;
+}
+
+function jitter(x, y, r) {
+  return [x + Math.sin(x + y) * r, y + Math.cos(x - y) * r];
 }
 
 export default class Delaunay {
   constructor(points) {
-    let d = new Delaunator(points);
-    if (d.triangles.length === 0 && d.hull.length > 2) {
-      this.collinear = d.hull; // for exact neighbors
+    let d = new Delaunator(points),
+      a = area(d.hull, points);
+    if (a < 1e-10 && d.hull && d.hull.length > 2) {
+      this.collinear = Int32Array.from({length: points.length/2}, (_,i) => i)
+        .sort((i, j) => points[2 * i] - points[2 * j] || points[2 * i + 1] - points[2 * j + 1]); // for exact neighbors
+      const e = this.collinear[0], f = this.collinear[this.collinear.length - 1],
+        bounds = [ points[2 * e], points[2 * e + 1], points[2 * f], points[2 * f + 1] ],
+        r = 1e-8 * Math.sqrt((bounds[3] - bounds[1])**2 + (bounds[2] - bounds[0])**2);
       for (let i = 0, n = points.length / 2; i < n; ++i) {
-        const p = jitter(points[2 * i], points[2 * i + 1]);
+        const p = jitter(points[2 * i], points[2 * i + 1], r);
         points[2 * i] = p[0];
         points[2 * i + 1] = p[1];
       }
