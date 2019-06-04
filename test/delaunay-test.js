@@ -102,7 +102,7 @@ tape("delaunay.voronoi() for two points", test => {
 
 tape("delaunay.voronoi() for collinear points", test => {
   let voronoi = Delaunay.from([[0, 0], [1, 0], [-1, 0]]).voronoi([-1, -1, 2, 2]);
-  test.deepEqual(Array.from(voronoi.delaunay.neighbors(0)), [1,2]);
+  test.deepEqual(Array.from(voronoi.delaunay.neighbors(0)).sort(), [1, 2]);
   test.deepEqual(Array.from(voronoi.delaunay.neighbors(1)), [0]);
   test.deepEqual(Array.from(voronoi.delaunay.neighbors(2)), [0]);
 });
