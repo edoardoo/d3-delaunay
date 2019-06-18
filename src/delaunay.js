@@ -59,6 +59,32 @@ export default class Delaunay {
     while ((c = this._step(i, x, y)) >= 0 && c !== i && c !== i0) i = c;
     return c;
   }
+  getAngleBetweenThreePoints( p1, p2, p3) {
+    const s1 = Math.sqrt(Math.pow(p2.x-p1.x,2)+ Math.pow(p2.y-p1.y,2));    
+    const s2 = Math.sqrt(Math.pow(p2.x-p3.x,2)+ Math.pow(p2.y-p3.y,2)); 
+    const s3 = Math.sqrt(Math.pow(p3.x-p1.x,2)+ Math.pow(p3.y-p1.y,2));
+    return Math.acos((s2*s2+s1*s1-s3*s3) / (2*s2*s1)) * (180 / Math.PI);   
+  }
+  getTrianglePoints(i){
+    const {points, triangles} = this;
+    const t0 = triangles[i *= 3] * 2;
+    const t1 = triangles[i + 1] * 2;
+    const t2 = triangles[i + 2] * 2;
+    return [{ x : points[t0], y: points[t0 + 1]}, 
+    { x : points[t1], y: points[t1 + 1]}, 
+    { x : points[t2], y: points[t2 + 1]}];
+  }
+  getTriangleAnglesInDegrees(i){
+    let angles = [];
+    let trianglePoints = this.getTrianglePoints(i);
+    trianglePoints.forEach( (p,i)=>{
+      angles.push(this.getAngleBetweenThreePoints( trianglePoints[i], trianglePoints[(i+1)%3], trianglePoints[(i+2)%3]));
+    });
+    return angles;
+  }
+  getTriangleEquilateralScore(i){
+    return ((Math.max.apply(null, this.getTriangleAnglesInDegrees(i))-60)*100)/120;
+  }
   _step(i, x, y) {
     const {inedges, points} = this;
     if (inedges[i] === -1) return (i + 1) % (points.length >> 1);
@@ -125,6 +151,10 @@ export default class Delaunay {
     for (let i = 0, n = triangles.length / 3; i < n; ++i) {
       yield this.trianglePolygon(i);
     }
+  }
+  getTrianglesLength(){
+    const {triangles} = this;
+    return triangles.length / 3;
   }
   trianglePolygon(i) {
     const polygon = new Polygon;
